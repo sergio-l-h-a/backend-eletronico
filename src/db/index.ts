@@ -9,6 +9,9 @@ if (!databaseUrl) {
 
 const pool = new Pool({
   connectionString: databaseUrl,
+  ssl: {
+    rejectUnauthorized: false, // Permite conexões SSL do Render em ambiente local
+  },
 });
 
 export const db = drizzle(pool);
