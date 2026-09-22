@@ -16,10 +16,9 @@ app.use(express.json());
 app.use("/api/health", healthRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/os", osRouter);
- app.use("/api/produtos", produtosRouter);
- app.use("/api/clientes", clientesRouter);
- app.use("/api/financeiro", financeiroRouter);
- app.use("/api/pdv", pdvRouter);
+app.use("/api/clientes", clientesRouter);
+app.use("/api/financeiro", financeiroRouter);
+app.use("/api/pdv", pdvRouter);
 app.use("/api/estoque", estoqueRouter);
 
 const PORT = process.env.PORT || 4000;
