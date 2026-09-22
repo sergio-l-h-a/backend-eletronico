@@ -3,7 +3,10 @@ import cors from "cors";
 import { healthRouter } from "./routes/health.js";
 import { dashboardRouter } from "./routes/dashboard.js";
 import { osRouter } from "./routes/os.js";
-// importe outras rotas...
+import { pdvRouter } from "./routes/pdv.js";
+import { financeiroRouter } from "./routes/financeiro.js";
+import { clientesRouter } from "./routes/clientes.js";
+import { estoqueRouter } from "./routes/estoque.js";
 
 const app = express();
 
@@ -13,11 +16,11 @@ app.use(express.json());
 app.use("/api/health", healthRouter);
 app.use("/api/dashboard", dashboardRouter);
 app.use("/api/os", osRouter);
-// app.use("/api/produtos", produtosRouter);
-// app.use("/api/clientes", clientesRouter);
-// app.use("/api/financeiro", financeiroRouter);
-// app.use("/api/pdv", pdvRouter);
-//app.use("/api/estoque", estoqueRouter);
+ app.use("/api/produtos", produtosRouter);
+ app.use("/api/clientes", clientesRouter);
+ app.use("/api/financeiro", financeiroRouter);
+ app.use("/api/pdv", pdvRouter);
+app.use("/api/estoque", estoqueRouter);
 
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {

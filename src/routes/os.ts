@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db } from "../db";
-import { ordensServico } from "../db/schema";
+import { db } from "../db/index.js";
+import { ordensServico } from "../db/schema.js";
 import { eq, sql } from "drizzle-orm";
 
 export const osRouter = Router();

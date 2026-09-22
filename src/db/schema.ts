@@ -9,7 +9,7 @@ export const ordensServico = pgTable("ordens_servico", {
   defeito: text("defeito").notNull(),
   servico: text("servico"),
   pecas: text("pecas"),
-  valorTotal: numeric("valor_total"),
+  valorTotal: numeric("valor_total").notNull(),
   status: varchar("status", { length: 50 }).default("Aguardando Avaliação"),
   criadoEm: timestamp("criado_em").defaultNow(),
 });
@@ -17,6 +17,7 @@ export const ordensServico = pgTable("ordens_servico", {
 export const vendasBalcao = pgTable("vendas_balcao", {
   id: serial("id").primaryKey(),
   cliente: varchar("cliente", { length: 120 }),
+  vendaId: integer("venda_id"),
   clienteId: integer("cliente_id"),
   formaPagamento: varchar("forma_pagamento", { length: 50 }).notNull(),
   valorTotal: numeric("total").notNull(),

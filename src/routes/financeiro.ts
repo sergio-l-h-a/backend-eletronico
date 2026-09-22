@@ -7,20 +7,29 @@ export const financeiroRouter = Router();
 
 // Resumo geral
 financeiroRouter.get("/resumo", async (req, res) => {
-  const [{ totalVendas }] = await db
-    .select({ totalVendas: sql<number>`sum(CAST(total AS numeric))` })
+  // Query Total Vendas
+  const [vendasRes] = await db
+    .select({ totalVendas: sql<number>`COALESCE(sum(CAST(total AS numeric)), 0)` })
     .from(vendasBalcao);
 
-  const [{ totalOS }] = await db
-    .select({ totalOS: sql<number>`sum(CAST(valor_total AS numeric))` })
+  // Query Total Ordens de Serviço (status 'Entregue')
+  const [osRes] = await db
+    .select({ totalOS: sql<number>`COALESCE(sum(CAST(valor_total AS numeric)), 0)` })
     .from(ordensServico)
     .where(sql`status = 'Entregue'`);
 
-  const [{ totalDespesas }] = await db
-    .select({ totalDespesas: sql<number>`sum(CAST(valor AS numeric))` })
+  // Query Total Despesas
+  const [despesasRes] = await db
+    .select({ totalDespesas: sql<number>`COALESCE(sum(CAST(valor AS numeric)), 0)` })
     .from(despesas);
 
-  const lucro = (Number(totalVendas) || 0) + (Number(totalOS) || 0) - (Number(totalDespesas) || 0);
+  // Extração segura com fallback para 0
+  const totalVendas = Number(vendasRes?.totalVendas ?? 0);
+  const totalOS = Number(osRes?.totalOS ?? 0);
+  const totalDespesas = Number(despesasRes?.totalDespesas ?? 0);
+
+  // Cálculo de Lucro
+  const lucro = totalVendas + totalOS - totalDespesas;
 
   res.json({
     totalVendas,
