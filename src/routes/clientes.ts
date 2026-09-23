@@ -34,8 +34,7 @@ clientesRouter.get("/:id/buscar", async (req, res) => {
       .where(
         or(
           ilike(clientes.nome, termo),
-          ilike(clientes.telefone, termo),
-          ilike(clientes.cpf, termo)
+          ilike(clientes.telefone, termo)
         )
       );
 

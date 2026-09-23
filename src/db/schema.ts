@@ -43,13 +43,14 @@ export const produtos = pgTable("produtos", {
   criadoEm: timestamp("criado_em").defaultNow(),
 });
 
-export const clientes = pgTable("clientes", {
-  id: serial("id").primaryKey(),
-  nome: varchar("nome", { length: 120 }).notNull(),
-  telefone: varchar("telefone", { length: 20 }),
-  cpf: varchar("cpf", { length: 20 }),
-  email: varchar("email", { length: 120 }),
-  criadoEm: timestamp("criado_em").defaultNow(),
+// src/db/schema.ts
+export const clientes = pgTable('clientes', {
+  id: serial('id').primaryKey(),
+  nome: text('nome').notNull(),
+  telefone: text('telefone').notNull(),
+  // cpf: text('cpf'), <-- Remova ou comente esta linha
+  email: text('email'),
+  criadoEm: timestamp('criado_em').defaultNow(),
 });
 
 export const despesas = pgTable("despesas", {
