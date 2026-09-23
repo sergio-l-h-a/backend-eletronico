@@ -77,15 +77,6 @@ export const categorias = pgTable("categorias", {
   criadoEm: timestamp("criado_em").defaultNow(),
 });
 
-// export const osItens = pgTable("os_itens", {
-//   id: serial("id").primaryKey(),
-//   tipo: varchar("tipo", { length: 20 }), // "servico" ou "peca"
-//   produtoId: integer("produto_id"),
-//   descricao: varchar("descricao", { length: 200 }).notNull(),
-//   quantidade: integer("quantidade").notNull().default(1),
-//   valorUnitario: numeric("valor_unitario").notNull(),
-// });
-
 
 export const osItens = pgTable("os_itens", {
   id: serial("id").primaryKey(),
