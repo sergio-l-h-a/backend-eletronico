@@ -5,6 +5,9 @@ import { eq, sql } from "drizzle-orm";
 
 export const osItensRouter = Router();
 
+// Obter a referência correta da coluna de FK (osId ou os_id)
+const osIdColumn = (osItens as any).osId ?? (osItens as any).os_id;
+
 // Listar itens de uma OS
 osItensRouter.get("/:osId", async (req, res) => {
   try {
@@ -14,11 +17,10 @@ osItensRouter.get("/:osId", async (req, res) => {
       return res.status(400).json({ error: "ID da OS inválido" });
     }
 
-    // Usando os_id conforme a propriedade da tabela
     const itens = await db
       .select()
       .from(osItens)
-      .where(eq((osItens as any).os_id || (osItens as any).osId, osId));
+      .where(eq(osIdColumn, osId));
 
     res.json(itens);
   } catch (error: any) {
@@ -41,25 +43,20 @@ osItensRouter.post("/:osId", async (req, res) => {
     const valorNum = Number(valorUnitario) || 0;
     const prodIdNum = produtoId ? Number(produtoId) : null;
 
-    // Insert mapeando dinamicamente os campos
-    const itemData: any = {
+    // Montagem dinâmica e segura dos dados
+    const itemData: Record<string, any> = {
       tipo,
       descricao,
       quantidade: qtdNum,
       valorUnitario: valorNum,
       produtoId: prodIdNum,
+      osId: osId,
+      os_id: osId,
     };
-
-    // Suporta tanto os_id quanto osId
-    if ("os_id" in osItens) {
-      itemData.os_id = osId;
-    } else {
-      itemData.osId = osId;
-    }
 
     const novoItem = await db
       .insert(osItens)
-      .values(itemData)
+      .values(itemData as any)
       .returning();
 
     // Se for peça -> reduz estoque do produto
@@ -109,7 +106,7 @@ osItensRouter.delete("/:id", async (req, res) => {
     }
 
     const item: any = itemEncontrado[0];
-    const osId = item.os_id || item.osId;
+    const osId = item.osId ?? item.os_id;
     const { tipo, produtoId, quantidade } = item;
 
     // Apaga o item
