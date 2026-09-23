@@ -15,23 +15,36 @@ clientesRouter.get("/", async (req, res) => {
 });
 
 // Buscar cliente
+import { ilike, or } from "drizzle-orm";
+
 clientesRouter.get("/buscar", async (req, res) => {
-  const q = req.query.q?.toString() || "";
+  try {
+    const q = req.query.q?.toString() || "";
 
-  const lista = await db
-    .select()
-    .from(clientes)
-    .where(
-      sql`
-        LOWER(nome) LIKE LOWER('%${q}%')
-        OR telefone LIKE '%${q}%'
-        OR cpf LIKE '%${q}%'
-      `
-    );
+    if (!q.trim()) {
+      const todos = await db.select().from(clientes);
+      return res.json(todos);
+    }
 
-  res.json(lista);
+    const termo = `%${q}%`;
+
+    const lista = await db
+      .select()
+      .from(clientes)
+      .where(
+        or(
+          ilike(clientes.nome, termo),
+          ilike(clientes.telefone, termo),
+          ilike(clientes.cpf, termo)
+        )
+      );
+
+    return res.json(lista);
+  } catch (error) {
+    console.error("Erro ao buscar clientes:", error);
+    return res.status(500).json({ error: "Erro interno ao buscar clientes" });
+  }
 });
-
 // Criar cliente
 clientesRouter.post("/", async (req, res) => {
   const novo = await db.insert(clientes).values(req.body).returning();
