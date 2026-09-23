@@ -1,13 +1,13 @@
 import express from "express";
 import cors from "cors";
 
-// Import das rotas conforme os ficheiros na pasta routes/
 import { clientesRouter } from "./routes/clientes.js";
-import { osRouter } from "./routes/os.js";             // <-- Ficheiro os.ts
-import { osItensRouter } from "./routes/osItens.js";       // <-- Ficheiro osItens.ts
+import { osRouter } from "./routes/os.js";
+import { osItensRouter } from "./routes/osItens.js";
 import { estoqueRouter } from "./routes/estoque.js";
 import { financeiroRouter } from "./routes/financeiro.js";
 import { pdvRouter } from "./routes/pdv.js";
+import { vendaItensRouter } from "./routes/vendasItens.js"; // <-- Importar o novo router
 import { dashboardRouter } from "./routes/dashboard.js";
 
 const app = express();
@@ -17,11 +17,12 @@ app.use(express.json());
 
 // Registar os Middlewares/Rotas
 app.use("/clientes", clientesRouter);
-app.use("/ordens-servico", osRouter);    // Mapeia o os.ts para a rota /ordens-servico
-app.use("/os-itens", osItensRouter);     // Mapeia o osItens.ts para /os-itens
-app.use("/produtos", estoqueRouter);     // Mapeia estoque.ts para /produtos
+app.use("/ordens-servico", osRouter);
+app.use("/os-itens", osItensRouter);
+app.use("/produtos", estoqueRouter);
 app.use("/financeiro", financeiroRouter);
-app.use("/vendas-balcao", pdvRouter);     // Mapeia pdv.ts para /vendas-balcao
+app.use("/vendas-balcao", pdvRouter);
+app.use("/vendas-itens", vendaItensRouter); // <-- REGISTAR AQUI
 app.use("/dashboard", dashboardRouter);
 
 const PORT = process.env.PORT || 4000;
