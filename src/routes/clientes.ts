@@ -17,7 +17,7 @@ clientesRouter.get("/", async (req, res) => {
 // Buscar cliente
 import { ilike, or } from "drizzle-orm";
 
-clientesRouter.get("/buscar", async (req, res) => {
+clientesRouter.get("/:id/buscar", async (req, res) => {
   try {
     const q = req.query.q?.toString() || "";
 
