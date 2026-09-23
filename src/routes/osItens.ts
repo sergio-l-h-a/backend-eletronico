@@ -1,87 +1,144 @@
 import { Router } from "express";
 import { db } from "../db/index.js";
-import { osItens, ordensServico, produtos } from "../db/schema.js";
+import { osItens, produtos } from "../db/schema.js";
 import { eq, sql } from "drizzle-orm";
 
 export const osItensRouter = Router();
 
-// Listar itens da OS
+// Listar itens de uma OS
 osItensRouter.get("/:osId", async (req, res) => {
-  const osId = Number(req.params.osId);
+  try {
+    const osId = Number(req.params.osId);
 
-  const itens = await db
-    .select()
-    .from(osItens)
-    .where(eq(osItens.osId, osId));
+    if (isNaN(osId)) {
+      return res.status(400).json({ error: "ID da OS inválido" });
+    }
 
-  res.json(itens);
+    // Usando os_id conforme a propriedade da tabela
+    const itens = await db
+      .select()
+      .from(osItens)
+      .where(eq((osItens as any).os_id || (osItens as any).osId, osId));
+
+    res.json(itens);
+  } catch (error: any) {
+    console.error("Erro ao listar itens da OS:", error);
+    res.status(500).json({ error: "Erro interno do servidor." });
+  }
 });
 
-// Adicionar item
+// Adicionar item à OS
 osItensRouter.post("/:osId", async (req, res) => {
-  const osId = Number(req.params.osId);
-  const { tipo, descricao, quantidade, valorUnitario, produtoId } = req.body;
+  try {
+    const osId = Number(req.params.osId);
+    const { tipo, descricao, quantidade, valorUnitario, produtoId } = req.body;
 
-  const novoItem = await db
-    .insert(osItens)
-    .values({
-      osId,
+    if (isNaN(osId)) {
+      return res.status(400).json({ error: "ID da OS inválido" });
+    }
+
+    const qtdNum = Number(quantidade) || 1;
+    const valorNum = Number(valorUnitario) || 0;
+    const prodIdNum = produtoId ? Number(produtoId) : null;
+
+    // Insert mapeando dinamicamente os campos
+    const itemData: any = {
       tipo,
       descricao,
-      quantidade,
-      valorUnitario,
-    })
-    .returning();
+      quantidade: qtdNum,
+      valorUnitario: valorNum,
+      produtoId: prodIdNum,
+    };
 
-  // Se for peça → baixa estoque
-  if (tipo === "peca" && produtoId) {
-    await db
-      .update(produtos)
-      .set({
-        estoqueAtual: sql`${produtos.estoqueAtual} - ${quantidade}`,
-      })
-      .where(eq(produtos.id, produtoId));
+    // Suporta tanto os_id quanto osId
+    if ("os_id" in osItens) {
+      itemData.os_id = osId;
+    } else {
+      itemData.osId = osId;
+    }
+
+    const novoItem = await db
+      .insert(osItens)
+      .values(itemData)
+      .returning();
+
+    // Se for peça -> reduz estoque do produto
+    if (tipo === "peca" && prodIdNum) {
+      await db
+        .update(produtos)
+        .set({
+          estoqueAtual: sql`${produtos.estoqueAtual} - ${qtdNum}`,
+        })
+        .where(eq(produtos.id, prodIdNum));
+    }
+
+    // Recalcular total da OS no PostgreSQL
+    await db.execute(sql`
+      UPDATE ordens_servico
+      SET valor_total = (
+        SELECT COALESCE(SUM(quantidade * valor_unitario), 0)
+        FROM os_itens
+        WHERE os_id = ${osId}
+      )
+      WHERE id = ${osId}
+    `);
+
+    res.status(201).json(novoItem[0]);
+  } catch (error: any) {
+    console.error("Erro ao adicionar item na OS:", error);
+    res.status(500).json({ error: "Erro interno do servidor." });
   }
-
-  // Recalcular total da OS
-  await db.execute(sql`
-    UPDATE ordens_servico
-    SET valor_total = (
-      SELECT SUM(quantidade * valor_unitario)
-      FROM os_itens
-      WHERE os_id = ${osId}
-    )
-    WHERE id = ${osId}
-  `);
-
-  res.json(novoItem[0]);
 });
 
-// Excluir item
+// Excluir item da OS
 osItensRouter.delete("/:id", async (req, res) => {
-  const id = Number(req.params.id);
+  try {
+    const id = Number(req.params.id);
 
-  const item = await db
-    .select()
-    .from(osItens)
-    .where(eq(osItens.id, id));
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID do item inválido" });
+    }
 
-  if (!item[0]) return res.json({ ok: false });
+    const itemEncontrado = await db
+      .select()
+      .from(osItens)
+      .where(eq(osItens.id, id));
 
-  const osId = item[0].osId;
+    if (!itemEncontrado[0]) {
+      return res.status(404).json({ error: "Item não encontrado." });
+    }
 
-  await db.delete(osItens).where(eq(osItens.id, id));
+    const item: any = itemEncontrado[0];
+    const osId = item.os_id || item.osId;
+    const { tipo, produtoId, quantidade } = item;
 
-  // Recalcular total da OS
-  await db.execute(sql`
-    UPDATE ordens_servico
-    SET valor_total = (
-      SELECT SUM(quantidade * valor_unitario)
-      FROM os_itens
-      WHERE os_id = ${osId}
-    )
-    WHERE id = ${osId}
-  `);
+    // Apaga o item
+    await db.delete(osItens).where(eq(osItens.id, id));
 
-  res.json({ ok: true });
+    // Se era uma peça -> devolve ao estoque
+    if (tipo === "peca" && produtoId) {
+      await db
+        .update(produtos)
+        .set({
+          estoqueAtual: sql`${produtos.estoqueAtual} + ${Number(quantidade) || 1}`,
+        })
+        .where(eq(produtos.id, produtoId));
+    }
+
+    // Recalcular total da OS
+    await db.execute(sql`
+      UPDATE ordens_servico
+      SET valor_total = (
+        SELECT COALESCE(SUM(quantidade * valor_unitario), 0)
+        FROM os_itens
+        WHERE os_id = ${osId}
+      )
+      WHERE id = ${osId}
+    `);
+
+    res.json({ ok: true, id, osId });
+  } catch (error: any) {
+    console.error("Erro ao excluir item da OS:", error);
+    res.status(500).json({ error: "Erro interno do servidor." });
+  }
 });
