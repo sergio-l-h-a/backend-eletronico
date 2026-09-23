@@ -29,6 +29,7 @@ export const vendasItens = pgTable("vendas_itens", {
   vendaId: integer("venda_id").notNull(),
   produtoId: integer("produto_id").notNull(),
   quantidade: integer("quantidade").notNull(),
+  descricao: varchar("descricao"),
   precoUnitario: numeric("preco_unitario").notNull(),
 });
 

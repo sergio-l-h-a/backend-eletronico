@@ -8,6 +8,7 @@ import { financeiroRouter } from "./routes/financeiro.js";
 import { clientesRouter } from "./routes/clientes.js";
 import { estoqueRouter } from "./routes/estoque.js";
 
+
 const app = express();
 
 app.use(cors());

@@ -20,7 +20,7 @@ vendaItensRouter.get("/:vendaId", async (req, res) => {
 // Adicionar item
 vendaItensRouter.post("/:vendaId", async (req, res) => {
   const vendaId = Number(req.params.vendaId);
-  const { produtoId, descricao, quantidade, valorUnitario } = req.body;
+  const { produtoId, descricao, quantidade, precoUnitario } = req.body;
 
   const novoItem = await db
     .insert(vendasItens)
@@ -29,7 +29,7 @@ vendaItensRouter.post("/:vendaId", async (req, res) => {
       produtoId,
       descricao,
       quantidade,
-      valorUnitario,
+      precoUnitario,
     })
     .returning();
 
